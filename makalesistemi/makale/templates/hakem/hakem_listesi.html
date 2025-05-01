@@ -1,0 +1,22 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Hakem Listesi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h3>🧑‍⚖️ Hakem Listesi</h3>
+    <ul class="list-group">
+        {% for hakem in hakemler %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ hakem.isim }} ({{ hakem.email }})
+                <a href="{% url 'hakem_panel_by_id' hakem.id %}" class="btn btn-primary btn-sm">Paneli Gör</a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+</body>
+</html>

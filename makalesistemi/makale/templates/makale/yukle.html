@@ -1,0 +1,54 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Makale Yükle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 650px;
+            margin-top: 50px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 16px rgba(0,0,0,0.1);
+        }
+        .takip-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 5px solid #0d6efd;
+            background-color: #e9f0ff;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4">📄 Akademik Makale Yükleme</h2>
+        
+        <p class="text-muted mb-3">
+            Lütfen geçerli bir <strong>e-posta</strong> adresi ve <strong>PDF dosyanızı</strong> yükleyin.
+            Yükleme sonrası size bir <strong>takip numarası</strong> verilecektir.
+        </p>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-success">Yükle</button>
+        </form>
+
+        {% if takip_no %}
+        <div class="takip-box mt-4">
+            <strong>✅ Takip Numaranız:</strong> {{ takip_no }} <br>
+            <small>Lütfen bu numarayı not alın. Durum sorgulamak ve mesaj göndermek için kullanacaksınız.</small>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'durum_sorgula' %}" class="btn btn-secondary mt-4">📄 Makale Durumu Sorgula</a>
+    </div>
+</body>
+</html>

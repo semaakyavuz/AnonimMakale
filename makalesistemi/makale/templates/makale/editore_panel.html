@@ -1,0 +1,182 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Editör Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f7fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .list-group-item a {
+            text-decoration: none;
+            display: block;
+            color: #212529;
+        }
+        .list-group-item:hover {
+            background-color: #e9ecef;
+        }
+        .card {
+            box-shadow: 0px 4px 16px rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        .assignment-status {
+            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        .assigned {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .not-assigned {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="mb-4">📋 Editör Paneli</h2>
+    <div class="row">
+        <!-- Sol: Makale listesi -->
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h5>🗂 Makaleler</h5>
+                <div class="list-group">
+                    {% for makale in makaleler %}
+                        <a href="?makale_id={{ makale.id }}" class="list-group-item list-group-item-action">
+                            {{ makale.takip_numarasi }}<br>
+                            <small>{{ makale.email }}</small>
+                            {% if makale.hakemeyollamakaydi_set.exists %}
+                                <div class="assignment-status assigned">
+                                    ✓ Hakeme Atandı
+                                </div>
+                            {% endif %}
+                        </a>
+                    {% empty %}
+                        <p class="text-muted">Henüz yüklenen makale yok.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ: Seçilen makale detay ve mesaj -->
+        <div class="col-md-8">
+            {% if secili_makale %}
+            <div class="card p-4">
+                <h5 class="mb-3">📄 Seçilen Makale Bilgileri</h5>
+                <p><strong>Takip No:</strong> {{ secili_makale.takip_numarasi }}</p>
+                <p><strong>E-posta:</strong> {{ secili_makale.email }}</p>
+                <p><strong>Yüklenme Tarihi:</strong> {{ secili_makale.yukleme_tarihi|date:"d.m.Y H:i" }}</p>
+                <p><strong>PDF:</strong> <a href="{{ secili_makale.pdf.url }}" target="_blank" class="btn btn-outline-primary btn-sm">İndir</a></p>
+
+                {% if secili_makale.hakemeyollamakaydi_set.exists %}
+                    {% with atama=secili_makale.hakemeyollamakaydi_set.first %}
+                    <div class="alert alert-success">
+                        <strong>✓ Hakem Ataması:</strong><br>
+                        {{ atama.hakem.isim }} ({{ atama.hakem.email }})<br>
+                        <small>Atanma Tarihi: {{ atama.tarih|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    {% endwith %}
+                {% endif %}
+
+                {% if secili_makale.guncellendi %}
+                    <div class="alert alert-warning mt-3">📌 Bu makale <strong>revize edilmiştir</strong>.</div>
+                {% endif %}
+
+                <a href="{% url 'anonimlestir' secili_makale.id %}" class="btn btn-danger btn-sm my-2">🔒 Anonimleştir</a>
+
+                {% if mesajlar %}
+                <hr>
+                <h6>📨 Mesaj Geçmişi</h6>
+                {% for mesaj in mesajlar %}
+                <div class="alert {% if mesaj.kullanici_gonderdi %}alert-primary{% else %}alert-light border{% endif %}">
+                    <small>{{ mesaj.tarih|date:"d.m.Y H:i" }}</small>
+                    <strong>
+                        {% if mesaj.kullanici_gonderdi %}
+                            Kullanıcı
+                        {% else %}
+                            Editör
+                        {% endif %}
+                    </strong><br>
+                    {{ mesaj.icerik }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if hakem_degerlendirmeleri %}
+                <hr class="mt-4">
+                <h5 class="text-success">📑 Hakem Değerlendirmeleri</h5>
+                {% for degerlendirme in hakem_degerlendirmeleri %}
+                    <div class="alert alert-secondary">
+                        <small>{{ degerlendirme.tarih|date:"d.m.Y H:i" }}</small><br>
+                        {{ degerlendirme.yorum }}
+                        <form method="POST" class="mt-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="makale_id" value="{{ secili_makale.id }}">
+                            <input type="hidden" name="degerlendirme_id" value="{{ degerlendirme.id }}">
+                            <button type="submit" name="append_evaluation" class="btn btn-primary btn-sm">
+                                📎 Değerlendirmeyi PDF'e Ekle
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+                {% endif %}
+
+                <hr>
+                <h6>✍️ Yazara Mesaj Gönder</h6>
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <input type="hidden" name="makale_id" value="{{ secili_makale.id }}">
+                    <button class="btn btn-primary mt-2">Gönder</button>
+                </form>
+
+                {% if gonderildi %}
+                    <div class="alert alert-success mt-3">Mesaj başarıyla gönderildi ✅</div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="card p-4">
+                <p class="text-muted">Soldan bir makale seçerek detaylara ulaşabilir ve işlem yapabilirsiniz.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    {% for message in messages %}
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header {% if message.tags %}bg-{{ message.tags }}{% endif %}">
+                <strong class="me-auto text-white">Bildirim</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Auto-hide toasts after 3 seconds
+    setTimeout(function() {
+        var toasts = document.getElementsByClassName('toast');
+        for(var i = 0; i < toasts.length; i++) {
+            toasts[i].classList.remove('show');
+        }
+    }, 3000);
+</script>
+</body>
+</html>

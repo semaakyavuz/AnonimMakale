@@ -1,0 +1,161 @@
+MAKALE SİSTEMİ KODLARI
+===================
+
+1. VIEWS (makale/views.py)
+-------------------------
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.conf import settings
+import os
+from .models import HakemDegerlendirme
+from .forms import HakemDegerlendirmeForm
+from .utils import anonymize_pdf, append_text_to_pdf
+
+from .models import Makale, Mesaj, AnonimlestirmeSecimi, Hakem, HakemeYollamaKaydi
+from .forms import (
+    MakaleYukleForm, DurumSorgulaForm, MesajForm,
+    RevizeMakaleForm, AnonimlestirmeForm,
+    KullaniciMesajForm, HakemeYollaForm
+)
+
+# Makale Yükleme View'i
+def makale_yukle(request):
+    takip_no = None
+    if request.method == 'POST':
+        form = MakaleYukleForm(request.POST, request.FILES)
+        if form.is_valid():
+            makale = form.save()
+            takip_no = makale.takip_numarasi
+    else:
+        form = MakaleYukleForm()
+    
+    return render(request, 'makale/yukle.html', {
+        'form': form,
+        'takip_no': takip_no
+    })
+
+# Durum Sorgulama View'i
+def durum_sorgula(request):
+    # ... (mevcut durum_sorgula kodu)
+
+# Editör Paneli View'i
+def editore_panel(request):
+    # ... (mevcut editore_panel kodu)
+
+# Anonimleştirme View'i
+def anonimlestir(request, makale_id):
+    # ... (mevcut anonimlestir kodu)
+
+# Hakeme Yollama View'i
+def hakeme_yolla(request, makale_id):
+    # ... (mevcut hakeme_yolla kodu)
+
+# Hakem Paneli View'i
+def hakem_panel(request, isim):
+    # ... (mevcut hakem_panel kodu)
+
+# Makale Değerlendirme View'i
+def makale_degerlendir(request, hakem_id, makale_id):
+    # ... (mevcut makale_degerlendir kodu)
+
+2. MODELS (makale/models.py)
+---------------------------
+from django.db import models
+import random
+import string
+
+# Makale Modeli
+class Makale(models.Model):
+    takip_numarasi = models.CharField(max_length=10, unique=True, editable=False, default=benzersiz_takip_no_uret)
+    email = models.EmailField()
+    ad_soyad = models.CharField(max_length=100, blank=True, null=True)
+    kurum = models.CharField(max_length=150, blank=True, null=True)
+    pdf = models.FileField(upload_to='makaleler/')
+    anonim_pdf = models.FileField(upload_to='anonim/', blank=True, null=True)
+    degerlendirme_pdf = models.FileField(upload_to='degerlendirmeler/', blank=True, null=True)
+    yukleme_tarihi = models.DateTimeField(auto_now_add=True)
+    guncellendi = models.BooleanField(default=False)
+
+# Hakem Modeli
+class Hakem(models.Model):
+    isim = models.CharField(max_length=100)
+    email = models.EmailField()
+
+# Hakem Değerlendirme Modeli
+class HakemDegerlendirme(models.Model):
+    makale = models.OneToOneField(Makale, on_delete=models.CASCADE)
+    hakem = models.ForeignKey(Hakem, on_delete=models.CASCADE)
+    yorum = models.TextField()
+    tarih = models.DateTimeField(auto_now_add=True)
+    tamamlandi = models.BooleanField(default=False)
+
+# Hakeme Yollama Kaydı Modeli
+class HakemeYollamaKaydi(models.Model):
+    makale = models.OneToOneField(Makale, on_delete=models.CASCADE, unique=True)
+    hakem = models.ForeignKey(Hakem, on_delete=models.CASCADE)
+    degerlendirme_pdf = models.FileField(upload_to='degerlendirmeler/', blank=True, null=True)
+    tarih = models.DateTimeField(auto_now_add=True)
+
+3. FORMS (makale/forms.py)
+-------------------------
+from django import forms
+from .models import Makale, Mesaj, AnonimlestirmeSecimi, HakemDegerlendirme
+
+# Makale Yükleme Formu
+class MakaleYukleForm(forms.ModelForm):
+    class Meta:
+        model = Makale
+        fields = ['email', 'pdf']
+
+# Hakem Değerlendirme Formu
+class HakemDegerlendirmeForm(forms.ModelForm):
+    class Meta:
+        model = HakemDegerlendirme
+        fields = ['yorum']
+        labels = {'yorum': "Değerlendirme Yorumunuz"}
+        widgets = {
+            'yorum': forms.Textarea(attrs={'rows': 5, 'class': 'form-control', 'placeholder': 'Hakem yorumunuzu giriniz...'})
+        }
+
+4. UTILS (makale/utils.py)
+-------------------------
+import fitz
+import os
+
+def anonymize_pdf(input_path, output_path, keywords=[], secim=None):
+    # ... (mevcut anonymize_pdf kodu)
+
+def append_text_to_pdf(input_path, output_path, text_to_append):
+    """
+    Adds text to the end of a PDF file as a new page with proper Turkish character support.
+    """
+    # Open the PDF
+    doc = fitz.open(input_path)
+    
+    # Create a new page at the end
+    page = doc.new_page(-1)
+    
+    # Create text writer for better Unicode support
+    tw = fitz.TextWriter(page.rect)
+    
+    # Set font with Turkish character support
+    font = fitz.Font("Times-Roman")
+    
+    # Add the text with proper encoding
+    tw.append((50, 50), text_to_append, font=font, fontsize=12)
+    
+    # Write the text to the page
+    tw.write_text(page)
+    
+    # Save the modified PDF
+    doc.save(output_path)
+    doc.close()
+
+5. TEMPLATES
+-----------
+# makale/templates/makale/editore_panel.html
+# makale/templates/makale/durum_sorgula.html
+# makale/templates/makale/yukle.html
+# makale/templates/hakem/hakem_panel.html
+# makale/templates/hakem/degerlendir.html
+(Template kodları çok uzun olduğu için özetlenmiştir) 

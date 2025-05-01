@@ -1,0 +1,79 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Hakem Paneli - {{ hakem.isim }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+        }
+        .container {
+            margin-top: 60px;
+            max-width: 1000px;
+        }
+        .paper-card {
+            transition: transform 0.2s;
+        }
+        .paper-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h3 class="mb-4">🧑‍⚖️ Hakem Paneli - {{ hakem.isim }}</h3>
+    <p class="text-muted mb-4">E-posta: {{ hakem.email }}</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-info mb-4">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">📝 Değerlendirilecek Makaleler</h4>
+            {% if makaleler %}
+                {% for makale_info in makaleler %}
+                    <div class="card paper-card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Makale #{{ makale_info.makale.takip_numarasi }}</h5>
+                            <p class="card-text">
+                                <strong>Atanma Tarihi:</strong> {{ makale_info.assignment_date|date:"d.m.Y H:i" }}
+                            </p>
+                            
+                            {% if makale_info.makale.anonim_pdf %}
+                                <a href="/media/{{ makale_info.makale.anonim_pdf }}" class="btn btn-outline-primary btn-sm mb-2" target="_blank">
+                                    📄 Anonimleştirilmiş PDF'i İndir
+                                </a>
+                            {% else %}
+                                <p class="text-warning mb-2">⚠️ Makale henüz anonimleştirilmemiş</p>
+                            {% endif %}
+
+                            {% if makale_info.degerlendirme %}
+                                <div class="alert alert-success mb-2">
+                                    <strong>✅ Değerlendirme Yapıldı</strong><br>
+                                    {{ makale_info.degerlendirme.tarih|date:"d.m.Y H:i" }}
+                                </div>
+                            {% else %}
+                                <a href="{% url 'makale_degerlendir' hakem_id=hakem.id makale_id=makale_info.makale.id %}" class="btn btn-success">
+                                    Değerlendir
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    Henüz size atanmış makale bulunmamaktadır.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

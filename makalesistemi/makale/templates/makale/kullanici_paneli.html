@@ -1,0 +1,52 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kullanıcı Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    {% if makale %}
+        <div class="card p-4 shadow-sm">
+            <h4 class="mb-3">📄 Makale Bilgileri</h4>
+            <p><strong>Takip No:</strong> {{ makale.takip_numarasi }}</p>
+            <p><strong>E-posta:</strong> {{ makale.email }}</p>
+            <p><strong>Yükleme Tarihi:</strong> {{ makale.yukleme_tarihi }}</p>
+        </div>
+
+        {% if mesajlar %}
+            <div class="card mt-4 p-4 shadow-sm">
+                <h5>📨 Mesajlar</h5>
+                {% for mesaj in mesajlar %}
+                    <div class="alert alert-light border">
+                        <small>{{ mesaj.tarih|date:"d.m.Y H:i" }}</small><br>
+                        {{ mesaj.icerik }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted mt-4">Henüz mesaj yok.</p>
+        {% endif %}
+
+        <div class="card mt-4 p-4 shadow-sm">
+            <h5>✍️ Editöre Mesaj Gönder</h5>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="takip_numarasi" value="{{ makale.takip_numarasi }}">
+                <input type="hidden" name="email" value="{{ makale.email }}">
+                {{ mesaj_form|crispy }}
+                <button type="submit" class="btn btn-success mt-2">Gönder</button>
+            </form>
+
+            {% if gonderildi %}
+                <div class="alert alert-success mt-3">Mesajınız gönderildi ✅</div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="alert alert-danger mt-5">Makale bilgisi bulunamadı.</div>
+    {% endif %}
+</div>
+</body>
+</html>

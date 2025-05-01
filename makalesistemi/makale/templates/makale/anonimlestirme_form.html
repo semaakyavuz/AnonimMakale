@@ -1,0 +1,63 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Anonimleştirme Ayarları</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h3 class="mb-4">📄 {{ makale.takip_numarasi }} - Anonimleştirme Ayarları</h3>
+
+    <p><strong>E-posta:</strong> {{ makale.email }}</p>
+    <p><strong>PDF:</strong> <a href="{{ makale.pdf.url }}" target="_blank" class="btn btn-outline-primary btn-sm">Orijinal PDF</a></p>
+
+    <!-- PDF Anonimleştirme Formu -->
+    <form method="POST">
+        {% csrf_token %}
+        <div class="card p-4 shadow-sm">
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-danger mt-3">PDF’i Anonimleştir</button>
+        </div>
+    </form>
+
+    <!-- Anonimleştirilmiş PDF Görüntüleme -->
+    {% if makale.anonim_pdf %}
+        <div class="mt-4">
+            <p><strong>✔ Anonimleştirilmiş PDF:</strong></p>
+            <a href="/media/{{ makale.anonim_pdf }}" class="btn btn-success">Görüntüle</a>
+        </div>
+    {% else %}
+        <p class="text-danger mt-3">Makale henüz anonimleştirilmedi. Önce anonimleştirme işlemi yapınız.</p>
+    {% endif %}
+
+    <!-- Mesajların Gösterimi -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mt-3">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Hakeme Yönlendirme Formu ve Durumu -->
+    {% if makale.anonim_pdf %}
+        {% if hakem_form %}
+            <hr class="mt-4">
+            <h5 class="text-info">📨 Anonimleştirilmiş PDF’i Hakeme Yönlendir</h5>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="makale_id" value="{{ makale.id }}">
+                <input type="hidden" name="hakeme_yolla" value="1">
+                {{ hakem_form|crispy }}
+                <button type="submit" class="btn btn-info mt-2">Hakeme Gönder</button>
+            </form>
+        {% elif hakeme_yolla_basari %}
+            <div class="alert alert-success mt-4">✅ Makale hakeme yönlendirilmiştir.</div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Editör Paneline Dön -->
+    <a href="{% url 'editore_panel' %}" class="btn btn-secondary mt-4">← Editör Paneline Geri Dön</a>
+</div>
+</body>
+</html>
